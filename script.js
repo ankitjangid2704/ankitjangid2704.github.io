@@ -33,13 +33,15 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Navbar background change on scroll
+// Optimized scroll handler with debouncing
 const navbar = document.getElementById('navbar');
 let lastScroll = 0;
+let ticking = false;
 
-window.addEventListener('scroll', () => {
+function updateScrollEffects() {
     const currentScroll = window.pageYOffset;
     
+    // Update navbar background
     if (currentScroll > 100) {
         navbar.style.background = 'rgba(255, 255, 255, 0.98)';
         navbar.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
@@ -48,7 +50,41 @@ window.addEventListener('scroll', () => {
         navbar.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
     }
     
+    // Update active navigation link
+    const sections = document.querySelectorAll('section[id]');
+    const scrollPosition = currentScroll + 100;
+    
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.offsetHeight;
+        const sectionId = section.getAttribute('id');
+        const navLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
+        
+        if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            if (navLink) {
+                navLink.classList.add('active');
+            }
+        }
+    });
+    
+    // Parallax effect for hero section
+    const hero = document.querySelector('.hero');
+    if (hero) {
+        hero.style.transform = `translateY(${currentScroll * 0.5}px)`;
+    }
+    
     lastScroll = currentScroll;
+    ticking = false;
+}
+
+window.addEventListener('scroll', () => {
+    if (!ticking) {
+        window.requestAnimationFrame(updateScrollEffects);
+        ticking = true;
+    }
 });
 
 // Animate elements on scroll
@@ -85,43 +121,23 @@ contactForm.addEventListener('submit', (e) => {
     const formData = new FormData(contactForm);
     const data = Object.fromEntries(formData);
     
-    // Show success message (in a real application, you would send this to a server)
-    alert(`Thank you, ${data.name}! Your message has been received. I'll get back to you soon at ${data.email}.`);
+    // Show success message with better UX
+    const submitBtn = contactForm.querySelector('.btn');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Message Sent! ✓';
+    submitBtn.style.background = '#10b981';
     
     // Reset form
     contactForm.reset();
-});
-
-// Add active state to current section in navigation
-window.addEventListener('scroll', () => {
-    const sections = document.querySelectorAll('section[id]');
-    const scrollPosition = window.pageYOffset + 100;
     
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.offsetHeight;
-        const sectionId = section.getAttribute('id');
-        const navLink = document.querySelector(`.nav-link[href="#${sectionId}"]`);
-        
-        if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            if (navLink) {
-                navLink.classList.add('active');
-            }
-        }
-    });
+    // Reset button after 3 seconds
+    setTimeout(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.style.background = '';
+    }, 3000);
 });
 
-// Parallax effect for hero section
-window.addEventListener('scroll', () => {
-    const hero = document.querySelector('.hero');
-    const scrolled = window.pageYOffset;
-    if (hero) {
-        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-    }
-});
+
 
 // Add hover effect for portfolio metrics
 document.querySelectorAll('.portfolio-item').forEach(item => {
